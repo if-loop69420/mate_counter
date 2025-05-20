@@ -1,10 +1,28 @@
 <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+<script>
+  document.body.addEventListener("htmx:configRequest", (event) => {
+    const token = localStorage.getItem("authToken"); // or from a variable/context
+    if (token) {
+      event.detail.headers['Authorization'] = `Bearer ${token}`;
+    }
+  });
+  document.body.addEventListener("htmx:afterRequest", (event) => {
+  const xhr = event.detail.xhr;
+  const token = xhr.getResponseHeader("Authorization");
+  if (token) {
+    localStorage.setItem("authToken", token);
+    console.log("Token stored!");
+  }
+});
+</script>
 
-<h2>Login</h2>
-<form> 
-  <label>Username:</label>
-  <input name="username" type="text"></input>
-  <label>Password:</label>
-  <input name="password" type="password"></input>
-  <button>Log in</button>
-</form>
+<div id="login_result">
+  <h2>Login</h2>
+  <form hx-post="/login" hx-target="#login_result" hx-swap="outerHTML"> 
+    <label>Username:</label>
+    <input name="username" type="text"></input>
+    <label>Password:</label>
+    <input name="password" type="password"></input>
+    <button type="submit">Log in</button>
+  </form>
+</div>
