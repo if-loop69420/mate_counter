@@ -6,5 +6,6 @@ edition = "2024"
 [dependencies]
 clap = { version = "4.5.38", features = ["derive"] }
 rocket = { version = "0.5.1", features = ["json"] }
+sha2 = "0.10.9"
 sqlx = { version = "0.8.6", features = ["sqlite"] }
 tokio = { version = "1.45.0", features = ["full"] }
