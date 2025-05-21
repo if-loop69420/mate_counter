@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT description FROM friendship_statuses WHERE id=$1",
+  "describe": {
+    "columns": [
+      {
+        "name": "description",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      true
+    ]
+  },
+  "hash": "e2a79f916eeb7ae04f14debe9bf8c83a1228239ae5b98eed911754706a45150f"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "UPDATE friendship SET mate_count=$1 WHERE (id_1=$2 AND id_2=$3) OR (id_1=$3 AND id_2=$2)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "b863e73bbf5add31ce20c5c206e6ec9a21659d482a67b514eb135cf69e0d40a6"
+}

@@ -25,12 +25,12 @@ pub trait MateDatabase {
     ) -> Result<Option<u32>, String>;
     async fn increase_counter(
         &mut self,
-        to_increase: String,
+        to_increase: u32,
         to_decrease: String,
     ) -> Result<i32, String>;
     async fn decrease_counter(
         &mut self,
-        to_decrease: String,
+        to_decrease: u32,
         to_increase: String,
     ) -> Result<i32, String>;
     async fn send_friendship_request(&mut self, from: String, to: String) -> Result<(), String>;
@@ -84,18 +84,146 @@ impl MateDatabase for SqliteConnection {
     }
     async fn increase_counter(
         &mut self,
-        to_increase: String,
+        to_increase: u32,
         to_decrease: String,
     ) -> Result<i32, String> {
-        todo!()
+        let decrease_id: u32 = match sqlx::query!("SELECT id from user where name=$1", to_decrease)
+            .fetch_one(&mut *self)
+            .await
+        {
+            Ok(x) => x.id.expect("Couldn't unwrap id") as u32,
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        };
+
+        let mut query = sqlx::query_as::<Sqlite, (i32, u32)>(
+            "SELECT mate_count,status_id FROM friendship WHERE id_1=$1 AND id_2=$2",
+        );
+
+        if to_increase < decrease_id {
+            query = query.bind(to_increase).bind(decrease_id);
+        } else {
+            query = query.bind(decrease_id).bind(to_increase);
+        }
+
+        let (current_count, status_id) = match query.fetch_one(&mut *self).await {
+            Ok(x) => x,
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        };
+
+        let status_name: String = match sqlx::query!(
+            "SELECT description FROM friendship_statuses WHERE id=$1",
+            status_id
+        )
+        .fetch_one(&mut *self)
+        .await
+        {
+            Ok(x) => x
+                .description
+                .expect("Couldn't unwrap record for friendship description"),
+            Err(e) => return Err(e.to_string()),
+        };
+
+        let new_count = if to_increase < decrease_id {
+            current_count + 1
+        } else {
+            current_count - 1
+        };
+
+        if status_name == "FRIENDS" {
+            match sqlx::query!(
+                "UPDATE friendship SET mate_count=$1 WHERE (id_1=$2 AND id_2=$3) OR (id_1=$3 AND id_2=$2)",
+                new_count,
+                to_increase,
+                decrease_id
+            )
+            .execute(&mut *self)
+            .await {
+            Ok(_x) => Ok(new_count),
+            Err(e) => {
+                return Err(e.to_string())
+            }
+        }
+        } else {
+            Err(String::from(
+                "Not allowed to set a mate counter if a friendship is not active",
+            ))
+        }
     }
 
     async fn decrease_counter(
         &mut self,
-        to_decrease: String,
+        to_decrease: u32,
         to_increase: String,
     ) -> Result<i32, String> {
-        todo!()
+        let increase_id: u32 = match sqlx::query!("SELECT id from user where name=$1", to_increase)
+            .fetch_one(&mut *self)
+            .await
+        {
+            Ok(x) => x.id.expect("Couldn't unwrap id") as u32,
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        };
+
+        let mut query = sqlx::query_as::<Sqlite, (i32, u32)>(
+            "SELECT mate_count,status_id FROM friendship WHERE id_1=$1 AND id_2=$2",
+        );
+
+        if to_decrease < increase_id {
+            query = query.bind(to_increase).bind(increase_id);
+        } else {
+            query = query.bind(increase_id).bind(to_decrease);
+        }
+
+        let (current_count, status_id) = match query.fetch_one(&mut *self).await {
+            Ok(x) => x,
+            Err(e) => {
+                return Err(e.to_string());
+            }
+        };
+
+        let status_name: String = match sqlx::query!(
+            "SELECT description FROM friendship_statuses WHERE id=$1",
+            status_id
+        )
+        .fetch_one(&mut *self)
+        .await
+        {
+            Ok(x) => x
+                .description
+                .expect("Couldn't unwrap record for friendship description"),
+            Err(e) => return Err(e.to_string()),
+        };
+
+        let new_count = if to_decrease < increase_id {
+            current_count - 1
+        } else {
+            current_count + 1
+        };
+
+        if status_name == "FRIENDS" {
+            match sqlx::query!(
+                "UPDATE friendship SET mate_count=$1 WHERE (id_1=$2 AND id_2=$3) OR (id_1=$3 AND id_2=$2)",
+                new_count,
+                to_decrease,
+                increase_id
+            )
+            .execute(&mut *self)
+            .await {
+            Ok(_x) => Ok(new_count),
+            Err(e) => {
+                return Err(e.to_string())
+            }
+        }
+        } else {
+            Err(String::from(
+                "Not allowed to set a mate counter if a friendship is not active",
+            ))
+        }
     }
 
     async fn send_friendship_request(&mut self, from: String, to: String) -> Result<(), String> {
