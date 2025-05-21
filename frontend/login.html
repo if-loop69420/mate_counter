@@ -2,16 +2,25 @@
 <script>
   document.body.addEventListener("htmx:configRequest", (event) => {
     const token = localStorage.getItem("authToken"); // or from a variable/context
+    const user_id = localStorage.getItem("user_id");
     if (token) {
       event.detail.headers['Authorization'] = `Bearer ${token}`;
+    }
+    if (user_id) {
+      event.detail.headers['user_id'] = `${user_id}`;
     }
   });
   document.body.addEventListener("htmx:afterRequest", (event) => {
   const xhr = event.detail.xhr;
   const token = xhr.getResponseHeader("Authorization");
+  const user_id = xhr.getResponseHeader("user_id");
   if (token) {
     localStorage.setItem("authToken", token);
     console.log("Token stored!");
+  }
+  if (user_id) {
+    localStorage.setItem("user_id", user_id);
+    console.log("stored user_id");
   }
 });
 </script>
