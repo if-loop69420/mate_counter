@@ -19,12 +19,10 @@ CREATE TABLE IF NOT EXISTS friendship (
     id_1 INTEGER,
     id_2 INTEGER,
     status_id INTEGER,
-    mate_count_1 INTEGER,
-    mate_count_2 INTEGER,
+    mate_count INTEGER, -- Positive if id_1 is owed. Negative if id_2 is owed
     PRIMARY KEY (id_1, id_2),
     FOREIGN KEY(id_1) REFERENCES user(id),
     FOREIGN KEY(id_2) REFERENCES user(id),
     FOREIGN KEY(status_id) REFERENCES friendship_statuses(id),
     CHECK(id_1 < id_2),
-    CHECK(mate_count_1 = -mate_count_2)
 );
